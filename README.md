@@ -1,43 +1,52 @@
-This Kata goal is to implement a simple tennis score computer.
+# 🎾 Tennis Kata
 
- 
+> > 🔴 **Disclosure:** the README and the test suite were co-authored with [Claude](https://claude.ai) as part of a near-TDD approach — tests and documentation were iterated alongside the production code rather than written after the fact.
 
-The scoring system consist in one game, divided by points :
+A Java implementation of the [tennis scoring kata](http://en.wikipedia.org/wiki/Tennis#Scoring). Given a sequence of balls won by two players (e.g. `ABABAA`), the app prints the score after each ball and the final winner.
 
-Each player starts a game with 0 point.
+## Requirements
 
-If the player wins the 1st ball, he will have 15 points. 2nd balls won : 30 points. 3rd ball won : 40points.
+- Java 17+
+- Maven 3.6+
 
-If a player have 40 points and wins the ball, he wins the game, however there are special rules.
+## Build
 
-If both players have 40 points the players are “deuce”.
+```bash
+mvn clean package
+```
 
-If the game is in deuce, the winner of the ball will have advantage
+## Run
 
-If the player with advantage wins the ball he wins the game
+```bash
+java -jar target/tennis-kata-1.0-SNAPSHOT.jar
+```
 
-If the player without advantage wins the ball they are back at “deuce”.
+You'll be prompted to enter a play chain — a sequence of exactly two distinct characters, e.g. `ABABAA` or `UUUIII`.
 
- 
+## Test
 
-You can found more details about the rules here : ( http://en.wikipedia.org/wiki/Tennis#Scoring )
+```bash
+mvn test
+```
 
- 
+## Example
 
-Here we want you to develop a java method that will take a String as input containing the character ‘A’ or ‘B’. The character ‘A’ corresponding to “player A won the ball”, and ‘B’ corresponding to “player B won the ball”. The java method should print the score after each won ball (for example : “Player A : 15 / Player B : 30”) and print the winner of the game.
+```
+Please enter the play chain: ABABAA
+Player A : 15 / Player B : 0
+Player A : 15 / Player B : 15
+Player A : 30 / Player B : 15
+Player A : 30 / Player B : 30
+Player A : 40 / Player B : 30
+Player A wins the game
+```
 
- 
+## Project layout
 
-For example the following input “ABABAA” should print :
-
-“Player A : 15 / Player B : 0”
-
-“Player A : 15 / Player B : 15”
-
-“Player A : 30 / Player B : 15”
-
-“Player A : 30 / Player B : 30”
-
-“Player A : 40 / Player B : 30”
-
-“Player A wins the game
+```
+src/main/java/com/tennis/kata/
+├── TennisGame.java          # entry point + game loop
+├── model/                   # Score, Player, Game
+├── engine/                  # input validation
+└── exception/               # domain exceptions
+```

@@ -1,6 +1,6 @@
 # 🎾 Tennis Kata
 
-> > 🔴 **Disclosure:** the README and the test suite were co-authored with [Claude](https://claude.ai) as part of a near-TDD approach — tests and documentation were iterated alongside the production code rather than written after the fact.
+> > 🔴 **Disclosure:** the README and the test suite and the project pom were co-authored with [Claude](https://claude.ai) as part of a near-TDD approach — tests and documentation were iterated alongside the production code rather than written after the fact.
 
 A Java implementation of the [tennis scoring kata](http://en.wikipedia.org/wiki/Tennis#Scoring). Given a sequence of balls won by two players (e.g. `ABABAA`), the app prints the score after each ball and the final winner.
 

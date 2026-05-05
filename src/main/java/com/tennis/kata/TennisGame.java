@@ -1,42 +1,81 @@
 package com.tennis.kata;
 
 import com.tennis.kata.engine.GameValidator;
-import com.tennis.kata.engine.ScoreHandlingService;
 import com.tennis.kata.engine.StandardGameValidator;
+import com.tennis.kata.exception.GameAlreadyFinishedException;
 import com.tennis.kata.exception.PlayChainNotValidException;
 import com.tennis.kata.model.Game;
-import com.tennis.kata.model.GameState;
 import com.tennis.kata.model.Player;
-import com.tennis.kata.printer.ConsoleScorePrinter;
-import com.tennis.kata.printer.ScorePrinter;
+import com.tennis.kata.model.Score;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
+import java.util.function.Consumer;
 
 public class TennisGame {
 
-    private final ScorePrinter printer;
+    private final GameValidator validator;
+    private final Consumer<String> output;
 
-    public TennisGame(ScorePrinter printer) {
-        this.printer = printer;
+    public TennisGame() {
+        this(new StandardGameValidator(), System.out::println);
     }
 
-    public void computeScore(String balls) {
-        List<Character> playerSymbols = extractPlayerSymbols(balls);
-        char symbolA = playerSymbols.get(0);
-        char symbolB = playerSymbols.get(1);
+    public TennisGame(GameValidator validator, Consumer<String> output) {
+        this.validator = validator;
+        this.output = output;
+    }
 
-        Player playerA = new Player(String.valueOf(symbolA));
-        Player playerB = new Player(String.valueOf(symbolB));
-        Game game = new Game(playerA, playerB);
-        ScoreHandlingService service = ScoreHandlingService.getInstance();
+    /**
+     * Runs the game from a sequence of ball-winner characters.
+     * Each character must be one of exactly two distinct symbols.
+     * Output (one line per ball, plus the final winner) is sent to the
+     * configured sink.
+     *
+     * @throws PlayChainNotValidException if the sequence is invalid
+     */
+    public void computeScore(String gameSequence) throws PlayChainNotValidException {
+        validator.validate(gameSequence);
 
-        for (char ballWinner : balls.toCharArray()) {
-            Player winner = ballWinner == symbolA ? playerA : playerB;
-            GameState state = service.ballWonBy(game, printer, winner);
-            if (state.equals(GameState.WIN)) {
+        List<Character> symbols = extractPlayerSymbols(gameSequence);
+        Player firstPlayer = new Player(symbols.get(0));
+        Player secondPlayer = new Player(symbols.get(1));
+        Game game = new Game(firstPlayer, secondPlayer);
+
+        for (char ball : gameSequence.toCharArray()) {
+            if (game.isWon()) {
                 break;
             }
+            playBall(game, ball, firstPlayer, secondPlayer);
+            output.accept(game.renderScore());
+        }
+    }
+
+    private void playBall(Game game, char ball, Player first, Player second) {
+        if (game.isWon()) {
+            throw new GameAlreadyFinishedException();
+        }
+
+        Player winner = (ball == first.getName()) ? first : second;
+        Player loser = (winner == first) ? second : first;
+
+        Optional<Player> advantage = game.playerWithAdvantage();
+
+        if (advantage.isEmpty()) {
+            // No advantage in play: either deuce-bound or a regular point.
+            // Winning a point at FORTY (when not deuce) means winning the game outright.
+            if (winner.getScore() == Score.FORTY && !game.isDeuce()) {
+                winner.win();
+            } else {
+                winner.incrementScore();
+            }
+        } else if (advantage.get().equals(winner)) {
+            // Player with advantage scores again → wins the game.
+            winner.win();
+        } else {
+            // Opponent of advantage-holder scores → back to deuce.
+            loser.loseAdvantage();
         }
     }
 
@@ -73,6 +112,13 @@ public class TennisGame {
         }
 
         System.out.println();
-        new TennisGame(new ConsoleScorePrinter()).computeScore(ballSequence);
+        try {
+            new TennisGame().computeScore(ballSequence);
+        } catch (PlayChainNotValidException e) {
+            // Should never happen — validation already passed above.
+            System.out.println("Unexpected validation error: " + e.getMessage());
+        }finally{
+            scanner.close();
+        }
     }
 }
